@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+.DS_Store
+
+# Keep the planning doc private (not part of the portfolio piece)
+PLAN.md
