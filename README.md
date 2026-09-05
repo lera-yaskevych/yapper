@@ -2,6 +2,12 @@
 
 A real-time chat app for people who just want to yap. One room, no login, no history — you show up, pick a name, and start talking. When you close the tab, it's like it never happened.
 
+
+
+https://github.com/user-attachments/assets/577e35aa-17e1-49cd-b494-a7b3442afe46
+
+
+
 ## What it actually does
 
 - Real-time messaging over a raw WebSocket connection (no Socket.IO, no magic — just the actual protocol)
