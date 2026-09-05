@@ -9,9 +9,7 @@ interface ChatClient {
   socket: WebSocket;
 }
 
-type ClientMessage =
-  | { type: "join"; name: string }
-  | { type: "message"; text: string };
+type ClientMessage = { type: "join"; name: string } | { type: "message"; text: string };
 
 type ServerMessage =
   | { type: "message"; id: string; name: string; text: string; timestamp: number }
@@ -29,7 +27,7 @@ const wss = new WebSocketServer({ server: httpServer });
 // Tracked in memory only — connections disappear on restart.
 const clients = new Map<string, ChatClient>();
 
-function broadcast(message: ServerMessage, exclude?: string) {
+const broadcast = (message: ServerMessage, exclude?: string) => {
   const payload = JSON.stringify(message);
   for (const client of clients.values()) {
     if (client.id === exclude) continue;
@@ -37,7 +35,7 @@ function broadcast(message: ServerMessage, exclude?: string) {
       client.socket.send(payload);
     }
   }
-}
+};
 
 wss.on("connection", (socket) => {
   const id = randomUUID();
