@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "lint": "oxlint"
   },
   "dependencies": {
     "express": "^4.21.1",
@@ -16,6 +17,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.0",
     "@types/ws": "^8.5.13",
+    "oxlint": "^1.79.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

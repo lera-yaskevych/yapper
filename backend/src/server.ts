@@ -9,12 +9,16 @@ interface ChatClient {
   socket: WebSocket;
 }
 
-type ClientMessage = { type: "join"; name: string } | { type: "message"; text: string };
+type ClientMessage =
+  | { type: "join"; name: string }
+  | { type: "message"; text: string }
+  | { type: "typing"; isTyping: boolean };
 
 type ServerMessage =
   | { type: "message"; id: string; name: string; text: string; timestamp: number }
   | { type: "system"; text: string; timestamp: number }
-  | { type: "user-count"; count: number };
+  | { type: "user-count"; count: number }
+  | { type: "typing"; name: string; isTyping: boolean };
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
@@ -30,7 +34,9 @@ const clients = new Map<string, ChatClient>();
 const broadcast = (message: ServerMessage, exclude?: string) => {
   const payload = JSON.stringify(message);
   for (const client of clients.values()) {
-    if (client.id === exclude) continue;
+    if (client.id === exclude) {
+      continue;
+    }
     if (client.socket.readyState === WebSocket.OPEN) {
       client.socket.send(payload);
     }
@@ -61,9 +67,13 @@ wss.on("connection", (socket) => {
 
     if (parsed.type === "message" && joined) {
       const client = clients.get(id);
-      if (!client) return;
+      if (!client) {
+        return;
+      }
       const text = parsed.text.trim().slice(0, 1000);
-      if (!text) return;
+      if (!text) {
+        return;
+      }
       broadcast({
         type: "message",
         id: randomUUID(),
@@ -71,6 +81,15 @@ wss.on("connection", (socket) => {
         text,
         timestamp: Date.now(),
       });
+      return;
+    }
+
+    if (parsed.type === "typing" && joined) {
+      const client = clients.get(id);
+      if (!client) {
+        return;
+      }
+      broadcast({ type: "typing", name: client.name, isTyping: parsed.isTyping }, id);
     }
   });
 

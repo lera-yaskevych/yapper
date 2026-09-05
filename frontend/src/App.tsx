@@ -15,7 +15,9 @@ const NameGate = ({ onJoin }: { onJoin: (name: string) => void }) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const trimmed = value.trim();
-    if (trimmed) onJoin(trimmed);
+    if (trimmed) {
+      onJoin(trimmed);
+    }
   };
 
   return (
@@ -49,28 +51,88 @@ const initialsOf = (name: string) =>
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
+// How long a pause in typing counts as "stopped" and clears the indicator.
+const TYPING_STOP_DELAY_MS = 2000;
+
 const App = () => {
-  const { status, messages, userCount, join, sendMessage } = useWebSocket();
+  const { status, messages, userCount, typingUsers, join, sendMessage, sendTyping } =
+    useWebSocket();
   const [name, setName] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+  const isTypingRef = useRef(false);
+  const typingStopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      if (typingStopTimer.current) {
+        clearTimeout(typingStopTimer.current);
+      }
+    };
+  }, []);
 
   const handleJoin = (chosenName: string) => {
     setName(chosenName);
     join(chosenName);
   };
 
+  const stopTyping = () => {
+    if (typingStopTimer.current) {
+      clearTimeout(typingStopTimer.current);
+    }
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      sendTyping(false);
+    }
+  };
+
+  const handleDraftChange = (text: string) => {
+    setDraft(text);
+
+    if (!text.trim()) {
+      stopTyping();
+      return;
+    }
+
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      sendTyping(true);
+    }
+
+    if (typingStopTimer.current) {
+      clearTimeout(typingStopTimer.current);
+    }
+    typingStopTimer.current = setTimeout(stopTyping, TYPING_STOP_DELAY_MS);
+  };
+
   const handleSend = (event: React.FormEvent) => {
     event.preventDefault();
     const text = draft.trim();
-    if (!text) return;
+    if (!text) {
+      return;
+    }
+    stopTyping();
     sendMessage(text);
     setDraft("");
   };
+
+  const otherTypingUsers = typingUsers.filter((typingName) => typingName !== name);
+  const typingLabel = useMemo(() => {
+    if (otherTypingUsers.length === 0) {
+      return null;
+    }
+    if (otherTypingUsers.length === 1) {
+      return `${otherTypingUsers[0]} is typing…`;
+    }
+    if (otherTypingUsers.length === 2) {
+      return `${otherTypingUsers[0]} and ${otherTypingUsers[1]} are typing…`;
+    }
+    return "Several people are typing…";
+  }, [otherTypingUsers]);
 
   const statusLabel = useMemo(() => STATUS_LABEL[status] ?? status, [status]);
 
@@ -111,13 +173,17 @@ const App = () => {
         )}
       </div>
 
+      <div className="typing-indicator-slot">
+        {typingLabel && <div className="typing-indicator">{typingLabel}</div>}
+      </div>
+
       <form className="composer" onSubmit={handleSend}>
         <input
           className="composer-input"
           placeholder="Say something…"
           maxLength={1000}
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => handleDraftChange(event.target.value)}
         />
         <button className="composer-send" type="submit" disabled={!draft.trim()}>
           Send

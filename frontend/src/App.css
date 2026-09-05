@@ -237,6 +237,22 @@
   white-space: pre-wrap;
 }
 
+/* ---------- Typing indicator ---------- */
+
+.typing-indicator-slot {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 20px;
+}
+
+.typing-indicator {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
 /* ---------- Composer ---------- */
 
 .composer {
